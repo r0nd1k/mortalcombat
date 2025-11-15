@@ -26,6 +26,8 @@ class Player(pg.sprite.Sprite):
     def __init__(self):
         super().__init__()
 
+        self.load_animations()
+
         self.image = self.idle_animation_right[0]
         self.current_image = 0
         self.current_animation = self.idle_animation_right
@@ -40,37 +42,34 @@ class Player(pg.sprite.Sprite):
 
     
     def load_animations(self):
-        
         self.idle_animation_right = [load_image(f"images/fire wizard/idle{i}.png", CHARACTER_WIDTH, CHARACTER_HEIGHT) for i in range(1, 4)]
-
         self.idle_animation_left = [pg.transform.flip(image, True, False) for image in self.idle_animation_right]
+
+        self.move_animation_right = [load_image(f"images/fire wizard/move{i}.png", CHARACTER_WIDTH, CHARACTER_HEIGHT) for i in range(1, 5)] 
+        self.move_animation_left = [pg.transform.flip(image, True, False) for image in self.move_animation_right]  
     
     def update(self):
         keys = pg.key.get_pressed()
         direction = 0
-        if pg.event == pg.keydown:
-            if keys[pg.K_a]:
-                direction = 1
-                self.side = 'left'
-            elif keys[pg.K_d]:
-                direction = 1
-                self.side = 'right'
+        if keys[pg.K_a]:
+            direction = -1
+            self.side = 'left'
+        elif keys[pg.K_d]:
+            direction = 1
+            self.side = 'right'
+
+        self.handle_movement(direction, keys)
+
         self.handle_animation()
     
     def handle_movement(self, direction, keys):
         if direction != 0:
-            x += direction
-            if direction == 1:
-                self.side = 'left'
-            else:
-                self.side = 'right'
-        else:
-            if self.side == 'left':
-                self.side = 'right'
-            if self.side == 'right':
-                self.side = 'left'
+            self.rect.x += direction
+            self.current_animation = self.move_animation_left if direction == -1 else self.move_animation_right
 
-    
+        else:
+            self.current_animation = self.idle_animation_left if self.side == "left" else self.idle_animation_right
+
     def handle_animation(self):
 
         if self.animation_mode:
@@ -90,6 +89,7 @@ class Game:
         pg.display.set_caption("Битва магов")
 
         self.background = load_image("images/background.png", SCREEN_WIDTH, SCREEN_HEIGHT)
+        self.frontground = load_image("images/frontground.png", SCREEN_WIDTH, SCREEN_HEIGHT)
 
         self.player = Player()
 
@@ -109,11 +109,11 @@ class Game:
                 quit()
 
     def update(self):
-        self.Player.update()
+        self.player.update()
 
     def draw(self):
-        # Отрисовка интерфейса
         self.screen.blit(self.background, (0, 0))
+        self.screen.blit(self.frontground, (0, 0))
         self.screen.blit(self.player.image, self.player.rect)
 
         pg.display.flip()
