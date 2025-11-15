@@ -40,13 +40,22 @@ class Player(pg.sprite.Sprite):
         self.side = 'right'
         self.animation_mode = True
 
+        self.change_power = 0
+        self.change_indicator = pg.Surface((self.change_power, 10))
+        self.change_indicator.fill(('red'))
+
+        self.change_mode = False
+
     
     def load_animations(self):
         self.idle_animation_right = [load_image(f"images/fire wizard/idle{i}.png", CHARACTER_WIDTH, CHARACTER_HEIGHT) for i in range(1, 4)]
         self.idle_animation_left = [pg.transform.flip(image, True, False) for image in self.idle_animation_right]
 
         self.move_animation_right = [load_image(f"images/fire wizard/move{i}.png", CHARACTER_WIDTH, CHARACTER_HEIGHT) for i in range(1, 5)] 
-        self.move_animation_left = [pg.transform.flip(image, True, False) for image in self.move_animation_right]  
+        self.move_animation_left = [pg.transform.flip(image, True, False) for image in self.move_animation_right]
+
+        self.charge = [load_image(f"images/fire wizard/charge.png", CHARACTER_WIDTH, CHARACTER_HEIGHT)]
+        self.charge.append(pg.transform.flip(self.charge[0], True, False))  
     
     def update(self):
         keys = pg.key.get_pressed()
@@ -64,10 +73,16 @@ class Player(pg.sprite.Sprite):
     
     def handle_movement(self, direction, keys):
         if direction != 0:
+            self.animation_mode = True
+            self.charge_mode = False
             self.rect.x += direction
             self.current_animation = self.move_animation_left if direction == -1 else self.move_animation_right
-
+        elif keys[pg.K_SPACE]:
+            self.animation_mode = False
+            self.image = self.charge[self.side != 'right']
         else:
+            self.animation_mode = True
+            self.charge_mode = False
             self.current_animation = self.idle_animation_left if self.side == "left" else self.idle_animation_right
 
     def handle_animation(self):
@@ -79,6 +94,11 @@ class Player(pg.sprite.Sprite):
                     self.current_image = 0
                 self.image = self.current_animation[self.current_image]
                 self.timer = pg.time.get_ticks()
+        
+        if self.charge_mode:
+            self.charge_power += 1
+            self.charge_indicator = pg.Surface((self.charge_power, 10))
+            self.charge_indicator.fill(('red'))
 
 
 class Game:
@@ -116,6 +136,8 @@ class Game:
         self.screen.blit(self.frontground, (0, 0))
         self.screen.blit(self.player.image, self.player.rect)
 
+        if self.player.charge_mode:
+            self.screen.blit(self.player.charge_indicator, (self.player.rect.left + 120, self.player.rect.top))
         pg.display.flip()
 
 
